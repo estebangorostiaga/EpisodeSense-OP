@@ -131,51 +131,59 @@ def validate_items():
             return int(items_displayed)
         else:
             print("Invalid Input. Please try again!")
-    
-# Get All-Time Top Episodes
-def all_time_func():
-    with open('my_list.json', 'r') as file:
-        data = json.load(file)
-    
-    items_displayed = validate_items()
 
-    filtered_list = []
-    
-    for episode_number, episode_data in data.items():
-        filtered_list.append(episode_data)
-            
-    pretty_print(filtered_list[:items_displayed]) 
-
-# Get Top Unwatched Episodes
-def unwatched_func():
+# Populate All Episode Data in List
+def populate_list():
     with open('my_list.json', 'r') as file:
         data = json.load(file)
         
+    populated_list = []
+    for episode_rank, episode_data in data.items():
+        populated_list.append(episode_data)
+    
+    return populated_list
+
+# Get All-Time Top Episodes
+def all_time_func():
+    
+    all_episodes_list = populate_list()
+    items_displayed = validate_items()
+
+    pretty_print(all_episodes_list[:items_displayed]) 
+
+# Return Unwatched Episodes for any functionality (All-Time, Unwatched, Top by Year)
+def unwatched_episodes(episode_list):
     
     # Need to do a get request for latest total episodes
     episode_range = range(1, 1062)
     while True:
-        current_episode = input("Enter the number of the last episode you watched: ")  # Year value to match
+        current_episode = input("Enter the number of the last episode you want to filter out: ")  # Year value to match
         if current_episode.isdigit() and int(current_episode) in episode_range:
             break
         else:
             print("Invalid Input. Please try again!")
     
-    items_displayed = validate_items()
     filtered_list = []
+    for episode in episode_list:
+        if 'Episode #' in episode and int(episode['Episode #']) > int(current_episode):
+            filtered_list.append(episode)
+
+    return filtered_list
+
+# Get Top Unwatched Episodes
+def unwatched_func():
+
+    all_episodes_list = populate_list()
+    unwatched_list = unwatched_episodes(all_episodes_list)
+    items_displayed = validate_items()
     
-    for episode_number, episode_data in data.items():
-        if 'Episode #' in episode_data and int(episode_data['Episode #']) > int(current_episode):
-            filtered_list.append(episode_data)
-            
-    pretty_print(filtered_list[:items_displayed]) 
+    pretty_print(unwatched_list[:items_displayed]) 
 
 # Get Top Episodes by Year
 def top_by_year_func():
 
-    with open('my_list.json', 'r') as file:
-        data = json.load(file)
-    
+    all_episodes_list = populate_list()    
+
     # Need to Change to Avoid Hardcoding
     year_range = range(1999, 2024)
     while True:
@@ -187,9 +195,25 @@ def top_by_year_func():
     
     filtered_list = []
     
-    for episode_number, episode_data in data.items():
-        if 'Year' in episode_data and episode_data['Year'] == year_to_match:
-            filtered_list.append(episode_data)
+    for episode in all_episodes_list:
+        if 'Year' in episode and episode['Year'] == year_to_match:
+            filtered_list.append(episode)
+    
+    while True:
+        episode_filter = input("Do you want to filter by a specific episode? (y/n): ")
+        episode_filter.lower()
+        if(episode_filter == "y"):
+            episode_filter_bool = True
+            break
+        elif(episode_filter == "n"):
+            episode_filter_bool = False
+            break
+        else:
+            print("Invalid Input. Please try again!")
+    
+    # Random to make it work
+    if episode_filter_bool == True:
+        filtered_list = unwatched_episodes(filtered_list)
     
     pretty_print(filtered_list) 
 
